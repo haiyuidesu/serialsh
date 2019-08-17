@@ -1,0 +1,15 @@
+serialsh
+
+> safety net against bootloop (reverse engineering session): spawn a shell over serial.
+
+I. Requierements
+	1. DCSD cable,
+	2. serial terminal,
+	3. jailbroken iOS device.
+
+II. Notes
+	> once compiled, copy the the binary to /etc/rc.d/ on the device.
+	> original project by @qwertyoruiopz, reversed then rewrote by @haiyuidesu
+	> if you see "mainslogin:", the 'mains' is an error that i'll fix on the next commit.
+
+updated: 15.08.2019
