@@ -64,7 +64,7 @@ int main(void) {
 		if (!(fd < 0)) {
 			attribs(fd, B115200);
 			block_attribs(fd, 0x0);
-			write(fd, "\r\n== hewo from the userspace uwu ==\r\n\r\n", 46); // 0x2EuLL
+			write(fd, "\r\n:serialsh, copyrights 2019, haiyuidesu:\r\n\r\n", 46); // 0x2EuLL
 			pipe(pipe_shin);
 			pipe(pipe_shout);
 			dup2(pipe_shout[0], 0);
@@ -84,10 +84,10 @@ int main(void) {
 				int uwu = kevent(kq, NULL, 0x0, &ke, 0x1, NULL);
 				if (uwu == 0) { continue; }
 				if (ke.ident == fd) {
-					int rd = read(fd, buf, 1024);
+					int rd = read(fd, buf, 0x400);
 					write(0x1, buf, rd);
 				} else if (ke.ident == 0) {
-					int rd = read(0x0, buf, 1024);
+					int rd = read(0x0, buf, 0x400);
 					write(fd, buf, rd);
 				} else if ((ke.filter == -5) && (ke.ident == pd)) {
 					waitpid(pd, NULL, 0x0);
