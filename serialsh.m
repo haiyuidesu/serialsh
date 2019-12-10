@@ -5,19 +5,15 @@
 
 pid_t pd = 0;
 int pipe_shin[2], pipe_shout[2];
-
-int 
-attribs(int fd, int baudrate) {
+int attribs(int fd, int baudrate) {
   struct termios tty;
-
   memset(&tty, 0x0, sizeof(tty));
-
-  if (tcgetattr(fd, &tty) != 0) 
+  if (tcgetattr(fd, &tty) != 0) {
     return -1;
+  }
 
   cfsetispeed(&tty, baudrate);
   cfsetospeed(&tty, baudrate);
-
   tty.c_cflag &= ~CRTSCTS;
   tty.c_cflag |= (CLOCAL | CREAD);
   tty.c_iflag |= IGNPAR;
@@ -32,25 +28,25 @@ attribs(int fd, int baudrate) {
   tty.c_cc[VTIME] = 1;
   tty.c_cc[VMIN]  = 0;
 
-  if (tcsetattr(fd, TCSANOW, &tty) != 0)
-    return -1; 
+  if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+    return -1;
+  } 
 
   return 0;
 }
 
 #define spawn_shin pipe_shin[1]
 #define main_sherr pipe_shout[1]
-
-void 
-block_attribs(int fd, int block_now) {
+void block_attribs(int fd, int block_now) {
   struct termios tty;
   memset(&tty, 0x0, sizeof(tty));
-
-  if (tcgetattr(fd, &tty) != 0) 
+  if (tcgetattr(fd, &tty) != 0) {
     return;
+  }
 
   tty.c_cc[VMIN]  = block_now ? 1 : 0;
   tty.c_cc[VTIME] = 5;
+
   tcsetattr(fd, TCSANOW, &tty);
 }
 
