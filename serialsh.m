@@ -8,6 +8,7 @@ int pipe_shin[2], pipe_shout[2];
 int attribs(int fd, int baudrate) {
   struct termios tty;
   memset(&tty, 0x0, sizeof(tty));
+  
   if (tcgetattr(fd, &tty) != 0) {
     return -1;
   }
@@ -75,7 +76,7 @@ int main(void) {
     // int fd = open("/dev/tty.uart-console", 133250);
     int fd = open("/dev/tty.debug-console", O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
     if (!(fd < 0)) {
-      attribs(fd, B115200);
+      attribs(fd, 115200);
       block_attribs(fd, 0);
 
       write(fd, "\r\n[serialsh]: initialized from the userland!\r\n", 46); // 0x2EuLL
