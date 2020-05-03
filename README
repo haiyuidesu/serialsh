@@ -6,12 +6,11 @@ I. Requierements
 	1. DCSD cable,
 	2. serial terminal,
 	3. jailbroken iOS device,
-	4. basic compiling tools + ldid2.
+	4. basic compiling tools + ldid.
 
 II. Notes
 	> original project by @qwertyoruiopz,
-	> once compiled, copy the the binary to /etc/rc.d/ on the device.
-	> with recents jailbreaks, you can replace serialsh by the serial=3 boot-arg.
-	> it means that serialsh can be used up to iOS 12 (which need to be signed by signcert.p12).
+	> once compiled, copy the the binary to /etc/rc.d/ on the device,
+	> you can also get a shell-over-serial by setting the serial=3 boot-arg (alternative).
 
-updated: 10.12.2019
+updated: 03.05.2020

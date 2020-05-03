@@ -1,6 +1,6 @@
 .PHONY: all clean
 
-SIGN 	= ldid2
+SIGN 	= ldid
 TARGET 	= serialsh
 IGCC 	?= xcrun -sdk iphoneos cc
 FLAGS 	?= -O2 -framework Foundation

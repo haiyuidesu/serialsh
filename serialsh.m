@@ -11,9 +11,7 @@ int attribs(int fd, int baudrate) {
 
   memset(&tty, 0x0, sizeof(tty));
   
-  if (tcgetattr(fd, &tty) != 0) {
-    return -1;
-  }
+  if (tcgetattr(fd, &tty) != 0) return -1;
 
   cfsetispeed(&tty, baudrate);
   cfsetospeed(&tty, baudrate);
@@ -30,12 +28,11 @@ int attribs(int fd, int baudrate) {
   tty.c_iflag     &= ~INPCK;
   tty.c_cflag     &= ~CSTOPB;
   tty.c_iflag     |= INPCK;
+
   tty.c_cc[VTIME] = 1;
   tty.c_cc[VMIN]  = 0;
 
-  if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-    return -1;
-  } 
+  if (tcsetattr(fd, TCSANOW, &tty) != 0) return -1;
 
   return 0;
 }
@@ -48,9 +45,7 @@ void block_attribs(int fd, int block_now) {
 
   memset(&tty, 0x0, sizeof(tty));
 
-  if (tcgetattr(fd, &tty) != 0) {
-    return;
-  }
+  if (tcgetattr(fd, &tty) != 0) return;
 
   tty.c_cc[VMIN]  = block_now ? 1 : 0;
   tty.c_cc[VTIME] = 5;
@@ -69,7 +64,6 @@ void spawnproc(void) {
       dup2(pipe_shin[0], 0);
 
       dup2(main_sherr, 1);
-
       dup2(main_sherr, 2);
 
       char *paramList[] = { "createpty", "-q", "/dev/null", "login" };
@@ -82,14 +76,13 @@ void spawnproc(void) {
     struct kevent ke;
 
     EV_SET(&ke, pd, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-
     kevent(kq, &ke, 1, NULL, 0, NULL);
   }
 }
 
 int main(void) {
   if (fork() == 0) {
-    // int fd = open("/dev/tty.uart-console", 133250);
+    /* it will works the same if you open /dev/uart.debug-console */
     int fd = open("/dev/tty.debug-console", O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
 
     if (!(fd < 0)) {
@@ -97,16 +90,14 @@ int main(void) {
 
       block_attribs(fd, 0);
 
-      write(fd, "\r\n[serialsh]: initialized from the userland!\r\n\r\n", 46); // 0x2EuLL
+      write(fd, "\r\n[serialsh]: initialized from the userland!\r\n", 46);
 
       pipe(pipe_shin);
-
       pipe(pipe_shout);
 
       dup2(pipe_shout[0], 0);
 
       dup2(spawn_shin, 1);
-
       dup2(spawn_shin, 2);
 
       kq = kqueue();
