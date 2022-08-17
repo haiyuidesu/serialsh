@@ -1,16 +1,21 @@
 serialsh
 
-> safety net against bootloop (reverse engineering session): spawn a shell over serial.
+> spawn a (reverse-)shell over a serial connection.
 
 I. Requierements
 	1. DCSD cable,
 	2. serial terminal,
 	3. jailbroken iOS device,
-	4. basic compiling tools + ldid.
+	4. XCode (xcrun & iphoneos SDK) + ldid2.
 
 II. Notes
 	> original project by @qwertyoruiopz,
 	> once compiled, copy the the binary to /etc/rc.d/ on the device,
 	> you can also get a shell-over-serial by setting the serial=3 boot-arg (alternative).
 
-updated: 03.05.2020
+III. Issue
+	> An issue is known where serialsh would not be able to start-up correctly.
+	  A work around would be to pass serialsh as a deamon (/Library/LaunchDaemons/).
+	  So if you really want to use it, please use the above method for the time being.
+
+	  I apologize for the inconvenience.

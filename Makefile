@@ -1,9 +1,9 @@
 .PHONY: all clean
 
-SIGN 	= ldid
+SIGN 	= ldid2
 TARGET 	= serialsh
-IGCC 	?= xcrun -sdk iphoneos cc
-FLAGS 	?= -O2 -framework Foundation
+IGCC 	?= xcrun -sdk iphoneos gcc
+FLAGS 	?= -O2 -framework Foundation -miphoneos-version-min=6.0
 ARCH 	?= -arch arm64 -arch armv7 -arch armv7s
 
 default: $(TARGET)
@@ -16,4 +16,5 @@ $(TARGET): $(TARGET).m
 	@echo "OK: compiled $(TARGET)"
 
 clean:
-	rm -f $(TARGET)
+	@echo "removed $(TARGET)"
+	@rm -f $(TARGET)
