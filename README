@@ -10,12 +10,5 @@ I. Requierements
 
 II. Notes
 	> original project by @qwertyoruiopz,
-	> once compiled, copy the the binary to /etc/rc.d/ on the device,
-	> you can also get a shell-over-serial by setting the serial=3 boot-arg (alternative).
-
-III. Issue
-	> An issue is known where serialsh would not be able to start-up correctly.
-	  A work around would be to pass serialsh as a deamon (/Library/LaunchDaemons/).
-	  So if you really want to use it, please use the above method for the time being.
-
-	  I apologize for the inconvenience.
+	> this update should works with checkra1n and others jailbreaks,
+	> once compiled, copy the the binary to /etc/rc.d/ on the device.

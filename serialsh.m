@@ -13,7 +13,8 @@ int pipe_shout[2] = { 0 };
 #define spawn_shin pipe_shin[1]
 #define main_sherr pipe_shout[1]
 
-int attribs(int fd, speed_t baudrate) {
+int attribs(int fd, speed_t baudrate)
+{
     struct termios tty;
 
     memset(&tty, 0x0, sizeof(tty));
@@ -25,36 +26,23 @@ int attribs(int fd, speed_t baudrate) {
 
     tty.c_cflag &= ~CRTSCTS;
     tty.c_cflag |= (CLOCAL | CREAD);
-    tty.c_iflag |= IGNPAR;
+    tty.c_iflag |= (IGNPAR);
     tty.c_iflag &= ~(IXON | IXOFF | INLCR | IGNCR);
     tty.c_oflag &= ~OPOST;
+
     tty.c_cflag &= ~CSIZE;
     tty.c_cflag |= CS8;
-
     tty.c_cflag &= ~PARENB;
     tty.c_iflag &= ~INPCK;
     tty.c_cflag &= ~CSTOPB;
     tty.c_iflag |= INPCK;
 
-    tty.c_cc[VTIME] = 1;
-    tty.c_cc[VMIN] = 0;
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) return -1;
-
-    return 0;
-}
-
-int block_attribs(int fd) {
-    struct termios tty;
-
-    memset(&tty, 0x0, sizeof(tty));
-
-    if (tcgetattr(fd, &tty) != 0) return -1;
-
     tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 5;
 
-    tcsetattr(fd, TCSANOW, &tty);
+    tty.c_lflag &= ~(ICANON | ECHO | ISIG | IEXTEN);
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) return -1;
 
     return 0;
 }
@@ -69,7 +57,7 @@ void spawnproc(void) {
             dup2(main_sherr, STDOUT_FILENO);
             dup2(main_sherr, STDERR_FILENO);
 
-            char *args[] = { "-q", "/dev/null", "login" };
+            char *args[] = { "createpty", "-q", "/dev/null", "login", NULL };
 
             execve("/usr/bin/script", args, NULL);
 
@@ -77,7 +65,7 @@ void spawnproc(void) {
         }
 
         EV_SET(&ke, pd, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-        kevent(kq, &ke, 1, NULL, 0, NULL);
+        kevent(kq, (const struct kevent *)&ke, 1, NULL, 0, NULL);
     }
 }
 
@@ -86,56 +74,56 @@ int main(void) {
     char buf[0x400];
     struct kevent ke;
 
-    if (fork() == 0) {
-        /* it will works the same if you open /dev/uart.debug-console */
-        if ((fd = open("/dev/tty.debug-console", 133250)) > 0) {
-            assert(attribs(fd, B115200) != -1);
+    if (fork() != 0) return 0;
 
-            assert(block_attribs(fd) != -1);
+    /* it will works the same if you open /dev/uart.debug-console */
+    if ((fd = open("/dev/tty.debug-console", O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK)) < 0) return 0;
 
-            dprintf(fd, "\r\n[serialsh]: hello from the userland!\r\n\n");
+    assert(attribs(fd, B115200) != -1);
 
-            pipe(pipe_shin);
-            pipe(pipe_shout);
+    dprintf(fd, "\r\n[serialsh]: hello from the userland!\r\n\n");
 
-            dup2(pipe_shout[0], STDIN_FILENO);
+    pipe(pipe_shin);
+    pipe(pipe_shout);
 
-            dup2(spawn_shin, STDOUT_FILENO);
-            dup2(spawn_shin, STDERR_FILENO);
+    dup2(pipe_shout[0], STDIN_FILENO);
 
-            if ((kq = kqueue()) == -1) {
-                dprintf(fd, "\r\n[serialsh]: error during initialization!\r\n\n");
-                close(fd);
-                return -1;
+    dup2(spawn_shin, STDOUT_FILENO);
+    dup2(spawn_shin, STDERR_FILENO);
+
+    if ((kq = kqueue()) == -1) {
+        dprintf(fd, "\r\n[serialsh]: error during initialization!\r\n\n");
+        close(fd);
+        return -1;
+    }
+
+    EV_SET(&ke, fd, EVFILT_READ, EV_ADD, 0, 5, 0);
+    kevent(kq, &ke, 1, NULL, 0, NULL);
+
+    EV_SET(&ke, 0, EVFILT_READ, EV_ADD, 0, 5, 0);
+    kevent(kq, &ke, 1, NULL, 0, NULL);
+
+    spawnproc();
+
+    for (;;) {
+        memset(&ke, 0x0, sizeof(ke));
+
+        if (kevent(kq, NULL, 0, &ke, 1, NULL) == 0) continue;
+
+        if (ke.ident == fd) {
+            ssize_t rd = read(fd, buf, sizeof(buf));
+            write(STDOUT_FILENO, buf, rd);
+        } else if (ke.ident) {
+            if ((ke.filter == EVFILT_PROC) && (ke.ident == pd)) {
+                waitpid(pd, NULL, 0);
+                pd = 0;
+                spawnproc();
             }
-
-            EV_SET(&ke, fd, EVFILT_READ, EV_ADD, 0, 5, 0);
-            kevent(kq, &ke, 1, NULL, 0, NULL);
-
-            EV_SET(&ke, 0, EVFILT_READ, EV_ADD, 0, 5, 0);
-            kevent(kq, &ke, 1, NULL, 0, NULL);
-
-            spawnproc();
-
-            for (int rd = 0;;) {
-                memset(&ke, 0x0, sizeof(ke));
-
-                if (kevent(kq, NULL, 0, &ke, 1, NULL) == 0) {
-                    continue;
-                }
-
-                if (ke.ident == fd) {
-                    rd = read(fd, buf, 0x400);
-                    write(STDOUT_FILENO, buf, rd);
-                } else if (ke.ident == 0) {
-                    rd = read(STDIN_FILENO, buf, 0x400);
-                    write(fd, buf, rd);
-                } else if ((ke.filter == EVFILT_PROC) && (ke.ident == pd)) {
-                    waitpid(pd, NULL, 0);
-                    pd = 0;
-                    spawnproc();
-                }
-            }
+        } else {
+            ssize_t rd = read(STDIN_FILENO, buf, sizeof(buf));
+            write(fd, buf, rd);
         }
     }
+
+    return 0;
 }
